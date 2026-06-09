@@ -1,0 +1,2 @@
+ALTER TABLE "Student" ALTER COLUMN "parentName" DROP NOT NULL;
+ALTER TABLE "Student" ALTER COLUMN "parentPhone" DROP NOT NULL;

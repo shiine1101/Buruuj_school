@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 40% 98%;
+  --foreground: 222 65% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 65% 14%;
+  --primary: 216 94% 50%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 216 35% 94%;
+  --muted-foreground: 220 18% 42%;
+  --border: 215 28% 86%;
+  --input: 215 28% 86%;
+  --ring: 216 94% 50%;
+  --success: 148 63% 41%;
+  --warning: 35 92% 50%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 222 65% 8%;
+  --foreground: 210 40% 98%;
+  --card: 222 52% 12%;
+  --card-foreground: 210 40% 98%;
+  --primary: 211 98% 56%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 222 38% 18%;
+  --muted-foreground: 215 24% 70%;
+  --border: 222 34% 22%;
+  --input: 222 34% 22%;
+  --ring: 211 98% 56%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in { animation: none; }
+}

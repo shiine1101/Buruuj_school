@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String       @id @default(cuid())
+  username          String       @unique
+  email             String       @unique
+  passwordHash      String
+  fullName          String
+  phone             String?
+  role              Role
+  status            UserStatus   @default(ACTIVE)
+  refreshTokenHash  String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  attendanceRecords Attendance[] @relation("AttendanceRecordedBy")
+  auditLogs         AuditLog[]
+  breakdownReports  Breakdown[]  @relation("BreakdownReportedBy")
+  driver            Driver?
+  fuelRecords       FuelRecord[] @relation("FuelCreatedBy")
+  parent            Parent?
+}
+
+model Parent {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id])
+  children  Student[]
+}
+
+model Student {
+  id               String        @id @default(cuid())
+  studentId        String        @unique
+  fullName         String
+  shift            Shift
+  parentName       String?
+  parentPhone      String?
+  emergencyContact String
+  pickupPoint      String
+  busId            String?
+  parentId         String?
+  status           StudentStatus @default(ACTIVE)
+  academicYear     String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  attendance       Attendance[]
+  payments         Payment[]
+  bus              Bus?          @relation(fields: [busId], references: [id])
+  parent           Parent?       @relation(fields: [parentId], references: [id])
+
+  @@index([fullName])
+  @@index([academicYear, shift])
+}
+
+model Driver {
+  id                 String              @id @default(cuid())
+  userId             String?             @unique
+  fullName           String
+  phone              String
+  licenseNumber      String              @unique
+  busId              String?             @unique
+  status             DriverStatus        @default(ACTIVE)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  busLocations       BusLocation[]
+  bus                Bus?                @relation("BusDriver", fields: [busId], references: [id])
+  user               User?               @relation(fields: [userId], references: [id])
+  geofenceViolations GeofenceViolation[]
+  routeSessions      RouteSession[]
+}
+
+model Bus {
+  id                 String              @id @default(cuid())
+  busNumber          String              @unique
+  plateNumber        String              @unique
+  capacity           Int
+  status             BusStatus           @default(ACTIVE)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  breakdowns         Breakdown[]
+  busLocations       BusLocation[]
+  driver             Driver?             @relation("BusDriver")
+  fuelRecords        FuelRecord[]
+  geofenceViolations GeofenceViolation[]
+  pickupPointVisits  PickupPointVisit[]
+  routeSessions      RouteSession[]
+  students           Student[]
+}
+
+model FuelRecord {
+  id        String   @id @default(cuid())
+  busId     String
+  liters    Decimal  @db.Decimal(10, 2)
+  cost      Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  notes     String?
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bus       Bus      @relation(fields: [busId], references: [id])
+  creator   User     @relation("FuelCreatedBy", fields: [createdBy], references: [id])
+}
+
+model Breakdown {
+  id          String          @id @default(cuid())
+  busId       String
+  problem     String
+  description String
+  repairCost  Decimal?        @db.Decimal(10, 2)
+  status      BreakdownStatus @default(PENDING)
+  reportedBy  String
+  date        DateTime
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  bus         Bus             @relation(fields: [busId], references: [id])
+  reporter    User            @relation("BreakdownReportedBy", fields: [reportedBy], references: [id])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  studentId    String
+  academicYear String
+  month        Int
+  amount       Decimal       @db.Decimal(10, 2)
+  status       PaymentStatus @default(UNPAID)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  student      Student       @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, academicYear, month])
+}
+
+model Attendance {
+  id          String   @id @default(cuid())
+  studentId   String
+  date        DateTime
+  pickedUp    Boolean  @default(false)
+  droppedHome Boolean  @default(false)
+  recordedBy  String
+  createdAt   DateTime @default(now())
+  recorder    User     @relation("AttendanceRecordedBy", fields: [recordedBy], references: [id])
+  student     Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, date])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  channel   String
+  event     String
+  sentTo    String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
+}
+
+model BackupRun {
+  id        String    @id @default(cuid())
+  type      String
+  status    String
+  fileUrl   String?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+}
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  startsAt  DateTime
+  endsAt    DateTime
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RouteSession {
+  id           String             @id @default(cuid())
+  busId        String
+  driverId     String
+  startTime    DateTime           @default(now())
+  endTime      DateTime?
+  status       RouteSessionStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  locations    BusLocation[]
+  pickupVisits PickupPointVisit[]
+  bus          Bus                @relation(fields: [busId], references: [id])
+  driver       Driver             @relation(fields: [driverId], references: [id])
+
+  @@index([busId, status])
+  @@index([driverId, status])
+  @@index([startTime])
+}
+
+model BusLocation {
+  id             String        @id @default(cuid())
+  busId          String
+  driverId       String
+  routeSessionId String?
+  latitude       Float
+  longitude      Float
+  speed          Float?
+  heading        Float?
+  accuracy       Float?
+  timestamp      DateTime      @default(now())
+  bus            Bus           @relation(fields: [busId], references: [id])
+  driver         Driver        @relation(fields: [driverId], references: [id])
+  routeSession   RouteSession? @relation(fields: [routeSessionId], references: [id])
+
+  @@index([busId, timestamp])
+  @@index([routeSessionId, timestamp])
+}
+
+model OperatingArea {
+  id        String   @id @default(cuid())
+  name      String
+  polygon   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GeofenceViolation {
+  id        String   @id @default(cuid())
+  busId     String
+  driverId  String
+  latitude  Float
+  longitude Float
+  timestamp DateTime @default(now())
+  resolved  Boolean  @default(false)
+  bus       Bus      @relation(fields: [busId], references: [id])
+  driver    Driver   @relation(fields: [driverId], references: [id])
+
+  @@index([busId, timestamp])
+}
+
+model PickupPoint {
+  id        String             @id @default(cuid())
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Float
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  visits    PickupPointVisit[]
+}
+
+model PickupPointVisit {
+  id             String        @id @default(cuid())
+  busId          String
+  pickupPointId  String
+  routeSessionId String?
+  arrivalTime    DateTime
+  departureTime  DateTime?
+  bus            Bus           @relation(fields: [busId], references: [id])
+  pickupPoint    PickupPoint   @relation(fields: [pickupPointId], references: [id])
+  routeSession   RouteSession? @relation(fields: [routeSessionId], references: [id])
+
+  @@index([busId, pickupPointId])
+  @@index([routeSessionId])
+}
+
+enum Role {
+  ADMIN
+  FINANCIAL_OFFICER
+  DRIVER
+  PARENT
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum Shift {
+  MORNING
+  AFTERNOON
+  VOCATIONAL
+}
+
+enum StudentStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum DriverStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum BusStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  OUT_OF_SERVICE
+  ARCHIVED
+}
+
+enum BreakdownStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  PARTIAL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  ARCHIVE
+  LOGIN
+  PAYMENT_CHANGE
+  MAINTENANCE_CHANGE
+}
+
+enum RouteSessionStatus {
+  ACTIVE
+  COMPLETED
+}
