@@ -74,7 +74,6 @@ function forceLogout() {
 }
 
 export function getApiBaseUrl() {
-
 return "https://zealous-empathy-production-1b10.up.railway.app";}
 
 function decodeBase64Url(value: string) {
