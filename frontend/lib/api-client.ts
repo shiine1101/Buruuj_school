@@ -74,8 +74,8 @@ function forceLogout() {
 }
 
 export function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-}
+
+return "https://zealous-empathy-production-1b10.up.railway.app";}
 
 function decodeBase64Url(value: string) {
   const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
