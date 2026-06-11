@@ -11,10 +11,49 @@ import { JwtService } from "@nestjs/jwt";
 import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 
+function normalizeOrigin(origin: string) {
+  return origin.replace(/\/$/, "");
+}
+
+function parseOrigins(value?: string) {
+  return (value ?? "")
+    .split(",")
+    .map((origin) => normalizeOrigin(origin.trim()))
+    .filter(Boolean);
+}
+
+function isAllowedSocketOrigin(origin: string | undefined) {
+  if (!origin) return true;
+
+  const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS);
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(normalizeOrigin(process.env.FRONTEND_URL));
+  }
+  if (process.env.VERCEL_URL) {
+    allowedOrigins.push(`https://${normalizeOrigin(process.env.VERCEL_URL)}`);
+  }
+
+  const normalized = normalizeOrigin(origin);
+  if (allowedOrigins.includes(normalized)) return true;
+
+  try {
+    const url = new URL(normalized);
+    const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+    const isVercelPreview = url.protocol === "https:" && url.hostname.endsWith(".vercel.app");
+    const isRailwayService = url.protocol === "https:" && url.hostname.endsWith(".up.railway.app");
+
+    return isLocalhost || isVercelPreview || isRailwayService;
+  } catch {
+    return false;
+  }
+}
+
 @WebSocketGateway({
   namespace: "/tracking",
   cors: {
-    origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
+    origin(origin, callback) {
+      callback(null, isAllowedSocketOrigin(origin));
+    },
     credentials: true
   }
 })

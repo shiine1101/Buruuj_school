@@ -14,6 +14,7 @@ import { SettingsModule } from "./settings/settings.module";
 import { LiveTrackingModule } from "./live-tracking/live-tracking.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { UsersModule } from "./users/users.module";
+import { HealthModule } from "./health/health.module";
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { UsersModule } from "./users/users.module";
     LiveTrackingModule,
     NotificationsModule,
     UsersModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

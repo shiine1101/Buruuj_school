@@ -1,6 +1,7 @@
 const TOKEN_KEY = "buruuj_access_token";
 const REFRESH_TOKEN_KEY = "buruuj_refresh_token";
 const USER_KEY = "buruuj_auth_user";
+const DEFAULT_BACKEND_URL = "https://zealous-empathy-production-1b10.up.railway.app";
 
 type BackendRole = "ADMIN" | "FINANCIAL_OFFICER" | "DRIVER" | "PARENT";
 
@@ -74,10 +75,12 @@ function forceLogout() {
 }
 
 export function getApiBaseUrl(): string {
-  const url =
-    process.env.NEXT_PUBLIC_API_URL ??
-    "https://zealous-empathy-production-1b10.up.railway.app";
-  return url.replace(/\/$/, "");
+  return "";
+}
+
+export function getSocketBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SOCKET_URL ?? process.env.NEXT_PUBLIC_API_URL;
+  return (url ?? DEFAULT_BACKEND_URL).replace(/\/$/, "");
 }
 
 function decodeBase64Url(value: string) {

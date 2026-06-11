@@ -1,5 +1,5 @@
 import { io, type Socket } from "socket.io-client";
-import { getAccessToken, getApiBaseUrl } from "@/lib/api-client";
+import { getAccessToken, getSocketBaseUrl } from "@/lib/api-client";
 
 let socket: Socket | null = null;
 
@@ -13,7 +13,8 @@ export function connectTrackingSocket() {
     return socket;
   }
 
-  socket = io(`${getApiBaseUrl()}/tracking`, {
+  const socketBaseUrl = getSocketBaseUrl();
+  socket = io(`${socketBaseUrl}/tracking`, {
     auth: { token },
     transports: ["websocket"]
   });
