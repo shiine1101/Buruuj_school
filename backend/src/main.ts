@@ -9,16 +9,31 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
-  app.useWebSocketAdapter(new IoAdapter(app));
-  app.use(helmet());
-  app.enableCors({
-    origin: config.get("FRONTEND_URL", "http://localhost:3000"),
-    credentials: true
-  });
-  app.setGlobalPrefix("api");
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // Configure Socket.IO adapter
+  const ioAdapter = new IoAdapter(app);
+  app.useWebSocketAdapter(ioAdapter);
 
-  await app.listen(config.get("PORT", 4000));
+  app.use(helmet());
+
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  });
+
+  app.setGlobalPrefix("api");
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
+
+  const port = config.get<number>("PORT", 4000);
+  await app.listen(port);
+
+  console.log(`🚀 Backend running on port ${port}`);
 }
 
 void bootstrap();

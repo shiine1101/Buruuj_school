@@ -73,8 +73,12 @@ function forceLogout() {
   }
 }
 
-export function getApiBaseUrl() {
-return "https://zealous-empathy-production-1b10.up.railway.app";}
+export function getApiBaseUrl(): string {
+  const url =
+    process.env.NEXT_PUBLIC_API_URL ??
+    "https://zealous-empathy-production-1b10.up.railway.app";
+  return url.replace(/\/$/, "");
+}
 
 function decodeBase64Url(value: string) {
   const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
